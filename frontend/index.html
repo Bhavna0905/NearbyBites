@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Foodie | Nearby Restaurants</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+    }
+    button {
+      cursor: pointer;
+    }
+    .card {
+      background: white;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    #map {
+      height: 400px;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>🍽️ Nearby Restaurant Finder</h2>
+
+<input type="number" id="lat" placeholder="Latitude" step="any">
+<input type="number" id="lng" placeholder="Longitude" step="any">
+
+<button onclick="find()">Find Restaurants</button>
+<button onclick="getMyLocation()">📍 Use My Location</button>
+
+<div id="map"></div>
+<div id="result"></div>
+
+<script>
+let map;
+let markers = [];
+
+/* Initialize / Update Map */
+function initMap(lat, lng) {
+  if (!map) {
+    map = L.map("map").setView([lat, lng], 14);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(map);
+  } else {
+    map.setView([lat, lng], 14);
+  }
+
+  // remove old markers
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  // user marker
+  const userMarker = L.marker([lat, lng])
+    .addTo(map)
+    .bindPopup("📍 You are here")
+    .openPopup();
+
+  markers.push(userMarker);
+}
+
+/* Fetch restaurants */
+function find() {
+  const lat = parseFloat(document.getElementById("lat").value);
+  const lng = parseFloat(document.getElementById("lng").value);
+
+  if (!lat || !lng) {
+    alert("Please enter latitude and longitude");
+    return;
+  }
+
+  initMap(lat, lng);
+
+  fetch(`http://localhost:5000/api/restaurants?lat=${lat}&lng=${lng}`)
+    .then(res => res.json())
+    .then(data => {
+      const div = document.getElementById("result");
+      div.innerHTML = "";
+
+      data.forEach(r => {
+        // list
+        div.innerHTML += `
+          <div class="card">
+            <b>${r.name}</b><br>
+            Distance: ${r.distance} km
+          </div>
+        `;
+
+        // restaurant marker
+        const marker = L.marker([r.lat, r.lng])
+          .addTo(map)
+          .bindPopup(`<b>${r.name}</b><br>${r.distance} km away`);
+
+        markers.push(marker);
+      });
+    });
+}
+
+/* AUTO DETECT USER LOCATION (GPS) */
+function getMyLocation() {
+  if (!navigator.geolocation) {
+    alert("Geolocation not supported by your browser");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      // auto fill inputs
+      document.getElementById("lat").value = lat;
+      document.getElementById("lng").value = lng;
+
+      // auto search
+      find();
+    },
+    error => {
+      alert("Location permission denied or unavailable");
+    }
+  );
+}
+</script>
+
+</body>
+</html>
