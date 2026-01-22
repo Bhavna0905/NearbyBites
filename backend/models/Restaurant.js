@@ -4,6 +4,7 @@ const RestaurantSchema = new mongoose.Schema(
   {},
   {
     collection: "restaurants",
+    
     strict: false
   }
 );
