@@ -1,4 +1,18 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useEffect } from "react";
+
+/* 🔁 Map Center Updater */
+function ChangeView({ center }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (center?.lat && center?.lng) {
+      map.setView([center.lat, center.lng], 13);
+    }
+  }, [center, map]);
+
+  return null;
+}
 
 export default function MapView({ userLocation, restaurants }) {
   if (!userLocation) return null;
@@ -10,34 +24,29 @@ export default function MapView({ userLocation, restaurants }) {
         zoom={13}
         style={{ height: "100%", width: "100%" }}
       >
+        {/* 🔥 THIS IS THE FIX */}
+        <ChangeView center={userLocation} />
+
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-        {/* ✅ USER MARKER */}
+        {/* 👤 User marker */}
         <Marker position={[userLocation.lat, userLocation.lng]}>
           <Popup>You are here</Popup>
         </Marker>
 
-        {/* ✅ SAFE RESTAURANT MARKERS */}
-        {restaurants
-          ?.filter(
-            r =>
-              typeof r.latitude === "number" &&
-              typeof r.longitude === "number" &&
-              !isNaN(r.latitude) &&
-              !isNaN(r.longitude)
-          )
-          .map(r => (
-            <Marker
-              key={r.id}
-              position={[r.latitude, r.longitude]}
-            >
-              <Popup>
+        {/* 🍽️ Restaurants */}
+        {restaurants.map((r) => (
+          <Marker
+            key={r.id}
+            position={[r.latitude, r.longitude]}
+          >
+            <Popup>
               <strong>{r.name}</strong><br />
               ⭐ {r.rating}<br />
               📍 {r.distance} km
             </Popup>
-            </Marker>
-          ))}
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
