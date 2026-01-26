@@ -3,7 +3,6 @@ import { useState } from "react";
 export default function SearchFilterBar({ onApply, onReset }) {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
-  const [sortBy, setSortBy] = useState("distance");
 
   return (
     <div className="search-filter">
@@ -21,18 +20,12 @@ export default function SearchFilterBar({ onApply, onReset }) {
         onChange={(e) => setLng(e.target.value)}
       />
 
-      <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-        <option value="distance">Distance</option>
-        <option value="rating">Rating</option>
-      </select>
-
       <div className="actions">
         <button
           onClick={() =>
             onApply({
               lat: Number(lat),
               lng: Number(lng),
-              sortBy
             })
           }
         >
