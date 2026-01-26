@@ -10,12 +10,17 @@ export default function Home() {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Fetch helper
-  const fetchData = async (lat, lng, sortBy = "distance") => {
+  const [sortBy, setSortBy] = useState("distance");
+  const [radius, setRadius] = useState(10);
+
+  const fetchData = async (lat, lng) => {
     setLoading(true);
+
     const data = await getRestaurants(lat, lng);
 
-    let sorted = [...data];
+    const nearby = data.filter((r) => r.distance <= radius);
+
+    let sorted = [...nearby];
     if (sortBy === "rating") {
       sorted.sort((a, b) => b.rating - a.rating);
     } else {
@@ -27,19 +32,29 @@ export default function Home() {
     setLoading(false);
   };
 
-  // 🔹 Initial: live location
   useEffect(() => {
     navigator.geolocation.getCurrentPosition((pos) => {
       fetchData(pos.coords.latitude, pos.coords.longitude);
     });
   }, []);
 
+  useEffect(() => {
+    if (userLocation) {
+      fetchData(userLocation.lat, userLocation.lng);
+    }
+  }, [sortBy, radius]);
+
   return (
     <>
-      <Header />
+      <Header
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        radius={radius}
+        onRadiusChange={setRadius}
+      />
 
       <SearchFilterBar
-        onApply={({ lat, lng, sortBy }) => fetchData(lat, lng, sortBy)}
+        onApply={({ lat, lng }) => fetchData(lat, lng)}
         onReset={() =>
           navigator.geolocation.getCurrentPosition((pos) =>
             fetchData(pos.coords.latitude, pos.coords.longitude)
